@@ -3,10 +3,10 @@ name = "verbatim-workflow"
 version = "0.1.0"
 description = "Mistral durable workflow to classify verbatims (multi-label) and discover new categories from the 'Other' bucket."
 readme = "README.md"
-requires-python = ">=3.10"
+# The durable-workflow worker requires Python 3.12+. The pure core (classify /
+# discover / run_local) also runs on 3.10+ if you don't deploy the worker.
+requires-python = ">=3.12"
 dependencies = [
-    # Mistral SDK. The workflow layer needs the workflows extra:
-    #   pip install "mistralai[workflows]>=1.2"
     "mistralai>=1.2",
     "pydantic>=2.6",
     "pyyaml>=6.0",
@@ -17,10 +17,17 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# Needed only to run the worker on the Mistral Workflows platform.
+workflows = [
+    "mistralai-workflows",
+    "mistralai-workflows-plugins-mistralai",
+]
 dev = ["pytest>=7.4", "pytest-asyncio>=0.23"]
 
 [project.scripts]
 verbatim-classify = "verbatim_workflow.run_local:main"
+verbatim-worker = "verbatim_workflow.worker:cli"
+verbatim-trigger = "verbatim_workflow.trigger:main"
 
 [build-system]
 requires = ["setuptools>=68"]

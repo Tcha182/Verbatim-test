@@ -18,6 +18,7 @@ from __future__ import annotations
 from .activities import (
     classify_activity,
     discover_activity,
+    parse_file_activity,
     run_pipeline_activity,
 )
 
@@ -86,4 +87,17 @@ class VerbatimClassificationWorkflow:
 class VerbatimClassificationOneShot:
     @_entrypoint
     async def run(self, texts: list[str], config_path: str = "config/categories.yaml") -> dict:
+        return await run_pipeline_activity(texts, config_path)
+
+
+# Trigger with just a file path on the worker (easiest for local testing):
+#   execute_workflow("verbatim-classification-file",
+#                    input={"input_path": "data/verbatims.example.csv"})
+@_define(name="verbatim-classification-file")
+class VerbatimClassificationFromFile:
+    @_entrypoint
+    async def run(
+        self, input_path: str, config_path: str = "config/categories.yaml"
+    ) -> dict:
+        texts = await parse_file_activity(input_path, config_path)
         return await run_pipeline_activity(texts, config_path)

@@ -48,6 +48,16 @@ def _make_client():
 
 
 @_activity()
+async def parse_file_activity(input_path: str, config_path: str) -> list[str]:
+    """Read an Excel/CSV/TSV file on the worker and return the verbatim texts."""
+    from .io_utils import read_verbatims  # pandas only needed here
+
+    config = load_config(config_path)
+    df, text_col = read_verbatims(input_path, config)
+    return df[text_col].fillna("").astype(str).tolist()
+
+
+@_activity()
 async def classify_activity(texts: list[str], config_path: str) -> list[dict]:
     """Classify verbatims. Returns a JSON-serializable list of row dicts."""
     config = load_config(config_path)

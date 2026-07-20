@@ -1,27 +1,53 @@
 """Worker entrypoint: registers the workflows and polls the Workflows platform.
 
-Run it (after ``pip install "mistralai[workflows]"`` and setting MISTRAL_API_KEY):
+Requires the workflows packages and Python 3.12+:
 
-    python -m verbatim_workflow.worker
+    uv pip install mistralai-workflows mistralai-workflows-plugins-mistralai
 
-The process runs until terminated. Once connected, the registered workflows can
-be triggered from the platform / surfaced in Le Chat via a connector or agent.
+Then run (a DEPLOYMENT_NAME is mandatory — the worker refuses to start without it):
+
+    DEPLOYMENT_NAME=verbatim-dev MISTRAL_API_KEY=... \
+        uv run python -m verbatim_workflow.worker
+
+The process runs until terminated. Once connected, trigger a run from the
+Mistral Console (Workflows -> Start Workflow) or with
+``verbatim_workflow.trigger`` / ``client.workflows.execute_workflow``.
 """
 
 from __future__ import annotations
 
 import asyncio
+import os
+import sys
 
-from .workflow import VerbatimClassificationOneShot, VerbatimClassificationWorkflow
+from .workflow import (
+    VerbatimClassificationFromFile,
+    VerbatimClassificationOneShot,
+    VerbatimClassificationWorkflow,
+)
 
 
 async def main() -> None:
+    if not os.environ.get("DEPLOYMENT_NAME"):
+        sys.exit("DEPLOYMENT_NAME must be set (e.g. DEPLOYMENT_NAME=verbatim-dev).")
+    if not os.environ.get("MISTRAL_API_KEY"):
+        sys.exit("MISTRAL_API_KEY must be set.")
+
     import mistralai.workflows as workflows
 
     await workflows.run_worker(
-        [VerbatimClassificationWorkflow, VerbatimClassificationOneShot]
+        [
+            VerbatimClassificationWorkflow,
+            VerbatimClassificationOneShot,
+            VerbatimClassificationFromFile,
+        ]
     )
 
 
-if __name__ == "__main__":
+def cli() -> None:
+    """Synchronous entrypoint for the ``verbatim-worker`` console script."""
     asyncio.run(main())
+
+
+if __name__ == "__main__":
+    cli()

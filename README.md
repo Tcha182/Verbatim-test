@@ -118,12 +118,12 @@ discovery: { enabled: true, min_cluster_size: 5, max_proposals: 10, samples_per_
 
 ---
 
-## Run it locally (recommended first step)
+## Run it locally (recommended first step — no platform needed)
 
 ```bash
-pip install -e .
-export MISTRAL_API_KEY=...            # or use a .env
-python -m verbatim_workflow.run_local \
+uv sync                                # or: uv venv && uv pip install -e .
+cp .env.example .env                   # put your MISTRAL_API_KEY in it
+uv run python -m verbatim_workflow.run_local \
     --input  data/verbatims.example.csv \
     --config config/categories.example.yaml \
     --output out.xlsx
@@ -137,24 +137,39 @@ You get `out.xlsx` with two sheets:
 
 ---
 
-## Deploy as a workflow (Le Chat)
+## Deploy the worker on the Mistral Workflows platform (Le Chat / SaaS)
+
+Prerequisites: **Python 3.12+**, **uv**, a Mistral API key. The worker holds your
+code and connects *outbound* to Mistral SaaS — the platform never reaches into
+your machine.
 
 ```bash
-pip install "mistralai[workflows]"
-export MISTRAL_API_KEY=...
-python -m verbatim_workflow.worker      # registers workflows, polls for tasks
+# 1. Install the workflow packages alongside the project
+uv pip install mistralai-workflows mistralai-workflows-plugins-mistralai
+uv run python -c "import mistralai.workflows; print('workflows OK')"
+
+# 2. Start the worker (DEPLOYMENT_NAME is mandatory). Keep this terminal open.
+DEPLOYMENT_NAME=verbatim-dev MISTRAL_API_KEY=... \
+    uv run python -m verbatim_workflow.worker
+
+# 3. In a SECOND terminal, trigger a run (reads the file ON the worker):
+uv run python -m verbatim_workflow.trigger \
+    -i data/verbatims.example.csv -c config/categories.example.yaml
 ```
 
-`worker.py` registers two workflows:
+You can also trigger from the **Mistral Console → Workflows → Start Workflow**
+(pick `verbatim-classification-file`, input `{"input_path": "data/verbatims.example.csv"}`).
+
+`worker.py` registers three workflows:
 - `verbatim-classification` — deterministic `classify → discover` (two durable
   activities, retried independently).
 - `verbatim-classification-oneshot` — the whole pipeline as a single activity.
+- `verbatim-classification-file` — takes a file path on the worker; easiest to
+  trigger.
 
 To give it a conversational front-end in Le Chat, wrap it with a **Durable Agent**
 that exposes `run_pipeline_activity` as a tool (the agent asks for the file /
 verbatims, calls the activity, and reports the summary + proposed categories).
-Uploaded files reach the worker as text/rows passed to the entrypoint —
-`io_utils.read_verbatims` handles Excel/CSV/TSV parsing on the worker side.
 
 ---
 
