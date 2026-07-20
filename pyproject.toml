@@ -1,0 +1,34 @@
+[project]
+name = "verbatim-workflow"
+version = "0.1.0"
+description = "Mistral durable workflow to classify verbatims (multi-label) and discover new categories from the 'Other' bucket."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    # Mistral SDK. The workflow layer needs the workflows extra:
+    #   pip install "mistralai[workflows]>=1.2"
+    "mistralai>=1.2",
+    "pydantic>=2.6",
+    "pyyaml>=6.0",
+    "pandas>=2.0",
+    "openpyxl>=3.1",
+    "numpy>=1.24",
+    "scikit-learn>=1.3",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4", "pytest-asyncio>=0.23"]
+
+[project.scripts]
+verbatim-classify = "verbatim_workflow.run_local:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

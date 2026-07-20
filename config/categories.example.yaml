@@ -1,0 +1,62 @@
+# Taxonomy + runtime configuration for the verbatim classification workflow.
+# Copy to config/categories.yaml and adapt to your use case.
+
+# Instruction language for the prompts sent to the model ("fr" or "en").
+# The verbatims themselves can be in any language; this only controls the
+# language the model reasons/answers in.
+language: fr
+
+# Label used when no known category applies. These verbatims feed the
+# "new category discovery" step at the end of the run.
+other_label: Autre
+
+# A verbatim can belong to several categories at once.
+multilabel: true
+
+# Where to find the text (and optional id) in the input Excel/CSV.
+# If text_column is null, the first text-like column is used.
+text_column: verbatim
+id_column: null
+
+# The known taxonomy. Descriptions matter a lot: they are the main lever
+# the model uses to decide. Be concrete, add inclusion/exclusion criteria.
+categories:
+  - name: Prix
+    description: >
+      Le client parle du coût, du tarif, du rapport qualité/prix, de promotions,
+      de frais ou d'un sentiment que c'est cher ou bon marché.
+  - name: Qualité produit
+    description: >
+      Remarques sur la qualité intrinsèque du produit : robustesse, finition,
+      défauts, conformité, durée de vie, matériaux.
+  - name: Livraison
+    description: >
+      Délais, transporteur, colis endommagé, suivi, retard, disponibilité,
+      tout ce qui touche l'acheminement de la commande.
+  - name: Service client
+    description: >
+      Interaction avec le support : amabilité, réactivité, résolution de
+      problème, SAV, retours et remboursements gérés par une personne.
+  - name: Site web / application
+    description: >
+      Expérience sur le site ou l'app : navigation, bugs, lenteur, tunnel de
+      commande, paiement en ligne, ergonomie.
+
+# Models used at each step.
+models:
+  classification: mistral-medium-latest
+  embedding: mistral-embed
+  naming: mistral-medium-latest
+
+# Runtime behaviour for the classification loop.
+runtime:
+  concurrency: 8          # parallel in-flight API calls
+  max_retries: 5          # per verbatim, exponential backoff on transient errors
+  embedding_batch_size: 100
+
+# "New category" discovery on the Other bucket.
+discovery:
+  enabled: true
+  min_cluster_size: 5     # ignore clusters smaller than this (noise)
+  max_proposals: 10       # cap the number of proposed new categories
+  samples_per_cluster: 10 # representative verbatims shown to the LLM per cluster

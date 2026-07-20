@@ -216,3 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Verbatim workflow — user-specific artifacts (keep the .example.* in git)
+/config/categories.yaml
+*.xlsx
+!data/*.example.xlsx
+/out.xlsx
