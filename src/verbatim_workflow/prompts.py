@@ -6,10 +6,12 @@ from .config import PipelineConfig
 
 
 def _taxonomy_block(config: PipelineConfig) -> str:
+    example_word = "ex." if config.language == "fr" else "e.g."
     lines = []
     for cat in config.categories:
         desc = cat.description.strip().replace("\n", " ")
         lines.append(f"- {cat.name}: {desc}" if desc else f"- {cat.name}")
+        lines.extend(f'    {example_word} "{ex}"' for ex in cat.examples)
     return "\n".join(lines)
 
 

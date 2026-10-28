@@ -18,6 +18,7 @@ from __future__ import annotations
 from .activities import (
     classify_activity,
     discover_activity,
+    evaluate_file_activity,
     parse_file_activity,
     run_pipeline_activity,
 )
@@ -93,11 +94,23 @@ class VerbatimClassificationOneShot:
 # Trigger with just a file path on the worker (easiest for local testing):
 #   execute_workflow("verbatim-classification-file",
 #                    input={"input_path": "data/verbatims.example.csv"})
+# If the file has human labels (label_column in the YAML, or passed here), the
+# output also contains an "evaluation" block with the scores.
 @_define(name="verbatim-classification-file")
 class VerbatimClassificationFromFile:
     @_entrypoint
     async def run(
-        self, input_path: str, config_path: str = "config/categories.yaml"
+        self,
+        input_path: str,
+        config_path: str = "config/categories.yaml",
+        label_column: str | None = None,
     ) -> dict:
         texts = await parse_file_activity(input_path, config_path)
-        return await run_pipeline_activity(texts, config_path)
+        output = await run_pipeline_activity(texts, config_path)
+        evaluation = await evaluate_file_activity(
+            input_path, config_path, output["results"], label_column
+        )
+        if evaluation is not None:
+            output["evaluation"] = evaluation
+            output["summary"]["evaluation"] = evaluation["metrics"]
+        return output

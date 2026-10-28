@@ -17,6 +17,8 @@ import yaml
 class Category:
     name: str
     description: str = ""
+    # Short sample verbatims shown to the model in the prompt (few-shot hints).
+    examples: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -67,6 +69,9 @@ class PipelineConfig:
     multilabel: bool = True
     text_column: str | None = None
     id_column: str | None = None
+    # Optional column with human labels (known categories or other_label,
+    # several separated by ";"). When set, the run is scored against it.
+    label_column: str | None = None
     settings: Settings = field(default_factory=Settings)
     discovery: DiscoveryConfig = field(default_factory=DiscoveryConfig)
 
@@ -103,8 +108,15 @@ def _as_categories(raw: Any) -> list[Category]:
             name = item.get("name")
             if not name:
                 raise ValueError(f"Category entry missing 'name': {item!r}")
+            examples = item.get("examples") or []
+            if isinstance(examples, str):
+                examples = [examples]
             cats.append(
-                Category(name=str(name).strip(), description=str(item.get("description", "")).strip())
+                Category(
+                    name=str(name).strip(),
+                    description=str(item.get("description", "")).strip(),
+                    examples=tuple(str(e).strip() for e in examples if str(e).strip()),
+                )
             )
         else:
             raise ValueError(f"Unsupported category entry: {item!r}")
@@ -145,6 +157,7 @@ def load_config(path: str | Path) -> PipelineConfig:
         multilabel=bool(data.get("multilabel", True)),
         text_column=data.get("text_column"),
         id_column=data.get("id_column"),
+        label_column=data.get("label_column"),
         settings=settings,
         discovery=discovery,
     )

@@ -1,0 +1,31 @@
+id,verbatim,label
+1001,"Beaucoup trop cher pour ce que c'est.",Prix
+1002,"Prices went up again, I'll shop elsewhere.",Prix
+1003,"Bon rapport qualité/prix, surtout pendant les soldes.",Prix
+1004,"Le code promo n'a pas appliqué les 20 % annoncés.",Prix
+1005,"Le pull a bouloché après deux lavages.",Qualité produit
+1006,"Great sturdy shoes, still like new after a year.",Qualité produit
+1007,"La batterie tient 2 heures, produit vraiment médiocre.",Qualité produit
+1008,"Produit arrivé cassé, et en plus hors de prix.",Qualité produit; Livraison; Prix
+1009,"Conseillère au top, très patiente.",Service client
+1010,"Nobody answers emails. 3 weeks without a reply.",Service client
+1011,"Le vendeur m'a parlé de manière très désagréable.",Service client
+1012,"Toujours pas remboursé après mon retour, et le SAV ne répond pas.",Service client
+1013,"Colis arrivé avec 10 jours de retard.",Livraison
+1014,"Package was left in the rain and everything was soaked.",Livraison
+1015,"Livraison en point relais super pratique.",Livraison
+1016,"Le numéro de suivi n'a jamais fonctionné.",Livraison
+1017,"Commande en retard et personne au service client pour m'expliquer.",Livraison; Service client
+1018,"L'appli plante au moment du paiement.",Site web / application
+1019,"Search on the website never finds what I type.",Site web / application
+1020,"Impossible de modifier mon adresse dans mon compte.",Site web / application
+1021,"Nice clean website, easy to order.",Site web / application
+1022,"Site très lent et les prix affichés ne correspondent pas au panier.",Site web / application; Prix
+1023,"J'aimerais pouvoir payer en plusieurs fois.",Autre
+1024,"Paypal n'est pas accepté, dommage.",Autre
+1025,"Ce serait bien d'avoir un magasin près de chez moi.",Autre
+1026,"RAS",Autre
+1027,"ok",Autre
+1028,"I like turtles",Autre
+1029,"Rien à ajouter",Autre
+1030,"Proposez des emballages zéro plastique svp.",Autre

@@ -18,29 +18,51 @@ multilabel: true
 text_column: verbatim
 id_column: null
 
+# Optional column with human labels, to score the run (precision, recall, F1,
+# confusion matrix). Use exact category names (or the other_label); separate
+# several labels with ";". Empty cells are skipped. Leave null if you have none.
+# Can also be passed on the command line with --label-column.
+label_column: null
+
 # The known taxonomy. Descriptions matter a lot: they are the main lever
 # the model uses to decide. Be concrete, add inclusion/exclusion criteria.
+# "examples" (optional) are short sample verbatims shown to the model.
 categories:
   - name: Prix
     description: >
       Le client parle du coût, du tarif, du rapport qualité/prix, de promotions,
       de frais ou d'un sentiment que c'est cher ou bon marché.
+    examples:
+      - "Beaucoup trop cher par rapport à la concurrence."
+      - "Bon rapport qualité/prix pendant les soldes."
   - name: Qualité produit
     description: >
       Remarques sur la qualité intrinsèque du produit : robustesse, finition,
       défauts, conformité, durée de vie, matériaux.
+    examples:
+      - "La fermeture éclair a cassé au bout de deux semaines."
+      - "Produit solide, toujours comme neuf après un an."
   - name: Livraison
     description: >
       Délais, transporteur, colis endommagé, suivi, retard, disponibilité,
       tout ce qui touche l'acheminement de la commande.
+    examples:
+      - "Colis arrivé avec une semaine de retard et le carton écrasé."
+      - "Livraison rapide, reçu en 48h."
   - name: Service client
     description: >
       Interaction avec le support : amabilité, réactivité, résolution de
       problème, SAV, retours et remboursements gérés par une personne.
+    examples:
+      - "40 minutes d'attente au téléphone avant d'avoir quelqu'un."
+      - "Conseillère très aimable, problème réglé en 5 minutes."
   - name: Site web / application
     description: >
       Expérience sur le site ou l'app : navigation, bugs, lenteur, tunnel de
       commande, paiement en ligne, ergonomie.
+    examples:
+      - "L'appli plante au moment de payer."
+      - "Site clair et facile à utiliser."
 
 # Models used at each step.
 models:

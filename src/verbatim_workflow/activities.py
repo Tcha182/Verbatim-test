@@ -76,6 +76,28 @@ async def discover_activity(other_texts: list[str], config_path: str) -> list[di
 
 
 @_activity()
+async def evaluate_file_activity(
+    input_path: str, config_path: str, results: list[dict], label_column: str | None = None
+) -> dict | None:
+    """Score results against the human-label column of the input file.
+
+    Uses ``label_column`` if given, else the one from the config. Returns None
+    when no label column is set.
+    """
+    from .evaluation import evaluate_results
+    from .io_utils import label_values, read_verbatims
+
+    config = load_config(config_path)
+    label_col = label_column or config.label_column
+    if not label_col:
+        return None
+    df, _ = read_verbatims(input_path, config)
+    rows = [RowClassification(**r) for r in results]
+    evaluation = evaluate_results(label_values(df, label_col), rows, config)
+    return {"label_column": label_col, **evaluation.to_dict()}
+
+
+@_activity()
 async def run_pipeline_activity(texts: list[str], config_path: str) -> dict:
     """Full classify + discover flow as a single activity.
 

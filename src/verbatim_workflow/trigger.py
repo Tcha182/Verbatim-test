@@ -21,6 +21,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     ap.add_argument("--input", "-i", required=True, help="Path to the file ON THE WORKER.")
     ap.add_argument("--config", "-c", default="config/categories.yaml")
     ap.add_argument(
+        "--label-column",
+        "-l",
+        default=None,
+        help="Column with human labels in the file, to score the run.",
+    )
+    ap.add_argument(
         "--workflow", default="verbatim-classification-file", help="Workflow identifier."
     )
     ap.add_argument(
@@ -41,6 +47,8 @@ def main(argv: list[str] | None = None) -> int:
         "workflow_identifier": args.workflow,
         "input": {"input_path": args.input, "config_path": args.config},
     }
+    if args.label_column:
+        kwargs["input"]["label_column"] = args.label_column
     if args.deployment:
         kwargs["deployment_name"] = args.deployment
 

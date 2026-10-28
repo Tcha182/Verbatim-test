@@ -75,6 +75,7 @@ src/verbatim_workflow/
                    retries+backoff, per-row errors, dedupe.
   discovery.py     Embeddings → HDBSCAN/KMeans → LLM naming.        [no SDK]
   pipeline.py      classify → discover orchestration.              [no SDK]
+  evaluation.py    Score against human labels (multi-label).      [pandas]
   io_utils.py      Read Excel/CSV, write enriched .xlsx.           [pandas]
   mistral_client.py  The one place that imports the SDK.
   activities.py    Durable-workflow activities (wrap the core).
@@ -99,16 +100,19 @@ Classification output is a closed enum, guaranteed by JSON schema:
 
 Everything lives in one YAML (`config/categories.example.yaml` → copy to
 `config/categories.yaml`). The **category descriptions are the main lever** — be
-concrete, add inclusion/exclusion criteria.
+concrete, add inclusion/exclusion criteria. Optional `examples` (a few short
+sample verbatims per category) are shown to the model as well.
 
 ```yaml
 language: fr            # instruction language (verbatims can be any language)
 other_label: Autre
 multilabel: true
 text_column: verbatim   # optional; auto-detected otherwise
+label_column: null      # optional column with human labels, to score the run
 categories:
   - name: Prix
     description: Coût, tarif, rapport qualité/prix, promotions, frais…
+    examples: ["Beaucoup trop cher par rapport à la concurrence."]   # optional
   - name: Livraison
     description: Délais, transporteur, colis endommagé, suivi, retard…
 models: { classification: mistral-medium-latest, embedding: mistral-embed, naming: mistral-medium-latest }
@@ -137,6 +141,38 @@ You get `out.xlsx` with two sheets:
 
 ---
 
+## Measure the quality against human labels
+
+Before trusting the classification, check it on a sample you labelled by hand.
+Add a column (e.g. `label`) with the expected categories — exact names from the
+taxonomy or `Autre`, several separated by `;` — and pass it with
+`--label-column` (or set `label_column` in the YAML). Empty cells are skipped, so
+you can label only part of the file. `data/verbatims.labeled.example.csv` has 30
+labelled FR/EN verbatims (some with several categories) to try it:
+
+```bash
+uv run python -m verbatim_workflow.run_local \
+    -i data/verbatims.labeled.example.csv \
+    -c config/categories.example.yaml \
+    -o out.xlsx --label-column label
+```
+
+The run then prints the scores and the workbook gets two more sheets:
+- **evaluation** — exact match (same label set), partial match (at least one
+  label right), Jaccard, micro/macro precision-recall-F1, and a per-category
+  table (precision, recall, F1, support).
+- **confusion** — rows = human label, columns = predicted label. With several
+  labels per verbatim, a cell counts the verbatims where the human set holds the
+  row label and the predicted set holds the column label.
+
+The **classified** sheet also gets `eval_exact_match`, `eval_missed` and
+`eval_extra` columns: filter on `eval_exact_match = FALSE` to read the
+disagreements — usually the fastest way to improve the category descriptions.
+
+Labels that are not in the taxonomy are ignored and listed as a warning.
+
+---
+
 ## Deploy the worker on the Mistral Workflows platform (Le Chat / SaaS)
 
 Prerequisites: **Python 3.12+**, **uv**, a Mistral API key. The worker holds your
@@ -155,6 +191,7 @@ DEPLOYMENT_NAME=verbatim-dev MISTRAL_API_KEY=... \
 # 3. In a SECOND terminal, trigger a run (reads the file ON the worker):
 uv run python -m verbatim_workflow.trigger \
     -i data/verbatims.example.csv -c config/categories.example.yaml
+# with human labels: -i data/verbatims.labeled.example.csv --label-column label
 ```
 
 You can also trigger from the **Mistral Console → Workflows → Start Workflow**
@@ -165,7 +202,8 @@ You can also trigger from the **Mistral Console → Workflows → Start Workflow
   activities, retried independently).
 - `verbatim-classification-oneshot` — the whole pipeline as a single activity.
 - `verbatim-classification-file` — takes a file path on the worker; easiest to
-  trigger.
+  trigger. If the file has human labels (`label_column` input or YAML), the
+  output also holds an `evaluation` block with the scores.
 
 To give it a conversational front-end in Le Chat, wrap it with a **Durable Agent**
 that exposes `run_pipeline_activity` as a tool (the agent asks for the file /
@@ -177,7 +215,7 @@ verbatims, calls the activity, and reports the summary + proposed categories).
 
 ```bash
 pip install -e ".[dev]"
-pytest        # 15 tests, no network — fakes injected for chat.parse & embeddings
+pytest        # 22 tests, no network — fakes injected for chat.parse & embeddings
 ```
 
 ---

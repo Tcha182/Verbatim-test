@@ -5,7 +5,7 @@ CONFIG ?= config/categories.example.yaml
 INPUT  ?= data/verbatims.example.csv
 OUTPUT ?= out.xlsx
 
-.PHONY: install install-workflows test run start-worker execute
+.PHONY: install install-workflows test run evaluate start-worker execute
 
 install:            ## Install core deps into a uv-managed venv
 	uv sync
@@ -18,6 +18,9 @@ test:               ## Run the unit test suite (no network)
 
 run:                ## Run the pipeline locally against the API (no platform)
 	uv run python -m verbatim_workflow.run_local -i $(INPUT) -c $(CONFIG) -o $(OUTPUT)
+
+evaluate:           ## Run locally on the labelled example and score it against the human labels
+	uv run python -m verbatim_workflow.run_local -i data/verbatims.labeled.example.csv -c $(CONFIG) -o $(OUTPUT) --label-column label
 
 start-worker:       ## Start the durable-workflow worker (keep this running)
 	uv run python -m verbatim_workflow.worker
